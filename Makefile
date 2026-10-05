@@ -2,12 +2,30 @@
 ## Two paths: lightweight (default, no Docker) and full Docker.
 
 VENV     := .venv
-PY       := $(VENV)/bin/python
-PIP      := $(VENV)/bin/pip
-JUPYTER  := $(VENV)/bin/jupyter
-JUPYTEXT := $(VENV)/bin/jupytext
-UVICORN  := $(VENV)/bin/uvicorn
-PYTEST   := $(VENV)/bin/pytest
+
+# Auto-detect python environment (.venv or active conda/mamba environment)
+ifneq ($(wildcard $(VENV)/bin/python),)
+  PY       := $(VENV)/bin/python
+  PIP      := $(VENV)/bin/pip
+  JUPYTER  := $(VENV)/bin/jupyter
+  JUPYTEXT := $(VENV)/bin/jupytext
+  UVICORN  := $(VENV)/bin/uvicorn
+  PYTEST   := $(VENV)/bin/pytest
+else ifneq ($(wildcard $(VENV)/Scripts/python.exe),)
+  PY       := $(VENV)/Scripts/python
+  PIP      := $(VENV)/Scripts/pip
+  JUPYTER  := $(VENV)/Scripts/jupyter
+  JUPYTEXT := $(VENV)/Scripts/jupytext
+  UVICORN  := $(VENV)/Scripts/uvicorn
+  PYTEST   := $(VENV)/Scripts/pytest
+else
+  PY       := python
+  PIP      := pip
+  JUPYTER  := jupyter
+  JUPYTEXT := jupytext
+  UVICORN  := uvicorn
+  PYTEST   := pytest
+endif
 
 .DEFAULT_GOAL := help
 
@@ -32,7 +50,6 @@ api: ## [lite] Start FastAPI /search on http://localhost:8000
 	@$(UVICORN) app.main:app --reload --port 8000
 
 lab: ## [lite] Open Jupyter Lab on http://localhost:8888
-	@$(JUPYTEXT) --to notebook --update notebooks/[0-9]*.py 2>/dev/null || true
 	@$(JUPYTER) lab --notebook-dir=notebooks --ServerApp.token='' --no-browser
 
 benchmark: ## [both] Precision@10 (keyword/semantic/hybrid) + P99 latency table
